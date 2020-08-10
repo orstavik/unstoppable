@@ -1,0 +1,45 @@
+<script>
+
+  class WebComp extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({mode: "open"});
+      this.shadowRoot.innerHTML = `<slot></slot>`;
+      this._slot = this.shadowRoot.children[0];
+    }
+  }
+
+  customElements.define("web-comp", WebComp);
+</script>
+
+<web-comp></web-comp>
+
+<script>
+  //this is another script that creates a starting state you do not know.
+  const h1 = document.createElement("h1");
+  h1.innerText = "hello sunshine";
+  const one = Math.round(Math.random());
+  const webComp = document.querySelector("web-comp");
+  (one ? webComp : webComp._slot).append(h1);
+</script>
+
+<script>
+  //ok, lets say you go through some hoops to sort this out.
+  //You assume that you can know an updated state of the DOM before the event dispatches.
+  //but, what if some other event listener changes this state before your first event listener knows about it?
+  window.addEventListener("click", function (e) {
+    const two = Math.round(Math.random());
+    two && webComp._slot.appendChild(h1);
+  }, {capture: true});
+</script>
+
+<script>
+  //when this event listener runs, there is no way of knowing if the node listed as
+  //either a fallback node or an assigned node was that at the beginning of event propagation.
+  window.addEventListener("click", e => console.log(e.composedPath(), h1.assignedSlot));
+  window.addEventListener("click", e => console.log("you cannot know if this root was the root" +
+    " of the slotted/fallback node at the beginning of event propagation.", e.target.getRootNode()));
+  //and that means that you do not know the dom context of the event target node every time something is slotted.
+  //you can guess, but you can never know.
+  h1.click();
+</script>

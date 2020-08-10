@@ -1,0 +1,43 @@
+<closed-comp>
+  <div>
+    light DOM
+    <input type="checkbox">
+  </div>
+</closed-comp>
+
+<script>
+  function isSlottedEvent(event){
+    let slots = 0;
+    for (let target of event.composedPath()) {
+      if (target === event.currentTarget)
+        return slots > 0;
+      if (target instanceof HTMLSlotElement)
+        slots++;
+      if (slots > 0 && target instanceof ShadowRoot)
+        slots--;
+    }
+    throw new Error("isSlottedEvent(event) should only be called on an event during propagation.");
+  }
+
+  class ClosedComp extends HTMLElement {
+    constructor() {
+      super();
+      const shadow = this.attachShadow({mode: "closed"});
+      shadow.innerHTML = `
+        shadowDOM <input type="checkbox">
+        <slot></slot>
+      `;
+      this._checkBox = shadow.children[0];
+
+      shadow.addEventListener("change", e => {
+        console.log("how can this be true? ", e.target.checked);
+        console.log("when this is false? ", this._checkBox.checked);
+        console.log("because the event is slotted? ", isSlottedEvent(e));
+      });
+    }
+  }
+
+  customElements.define("closed-comp", ClosedComp);
+
+  document.querySelector("input").click();
+</script>

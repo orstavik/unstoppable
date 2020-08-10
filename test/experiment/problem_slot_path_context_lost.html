@@ -1,0 +1,49 @@
+<script>
+
+  class WebComp extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({mode: "open"});
+      this.shadowRoot.innerHTML = `
+<slot>
+  <h1>hello sunshine</h1>
+</slot>
+`;
+      this.h1 = this.shadowRoot.children[0].children[0];
+      this._slot = this.h1.parentNode;
+    }
+  }
+  customElements.define("web-comp", WebComp);
+</script>
+
+<web-comp></web-comp>
+
+<script>
+  const webComp = document.querySelector("web-comp");
+  const slot = webComp._slot;
+  const h1 = webComp.h1;
+
+  //webcomp
+  //  #shadow
+  //    slot
+  //      h1  (fallback)
+  window.addEventListener("click", e=> console.log(e.composedPath(), slot.assignedNodes(), h1.assignedSlot, h1.getRootNode()))
+  window.addEventListener("click", e=> webComp.append(h1));
+  //webcomp
+  //  #shadow
+  //    slot
+  //      (reference to slotted element)
+  //  h1  (slotted)
+  window.addEventListener("click", e=> console.log(e.composedPath(), slot.assignedNodes(), h1.assignedSlot, h1.getRootNode()))
+  window.addEventListener("click", e=> slot.append(h1));
+  //webcomp
+  //  #shadow
+  //    slot
+  //      h1  (fallback)
+  window.addEventListener("click", e=> console.log(e.composedPath(), slot.assignedNodes(), h1.assignedSlot, h1.getRootNode()))
+  h1.click();
+</script>
+
+<p>
+  This experiment illustrate
+</p>

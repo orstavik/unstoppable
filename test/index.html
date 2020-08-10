@@ -1,0 +1,108 @@
+<script>
+
+  function nextTick2(cb) {
+    let r;
+    const p = new Promise(function (resolve) {
+      r = resolve;
+    });
+    setTimeout(function () {
+      cb();
+      setTimeout(function () {
+        r();
+      })//todo i need setTimeout(..., 1) for this to work in ff?
+    }); //todo i need 1 for this to work in ff?
+    return p;
+  }
+
+  function setValue(obj, a, b, value) {
+    !obj[a] && (obj[a] = {});
+    !obj[a][b] && (obj[a][b] = {});
+    obj[a][b] = value;
+  }
+
+  function printResults(results) {
+    for (let [testName, testResults] of Object.entries(results)) {
+      const expected = testResults.expected;
+      delete testResults.expected;
+      const native = testResults.NATIVE;
+      for (let [systemName, result] of Object.entries(testResults)) {
+        if (systemName === "NATIVE")
+          testResults[systemName] = result === expected ? 1 : result;
+        else
+          testResults[systemName] =
+            (result === expected && result === native) ? null :
+              (result === expected) ? 1 :
+                (result === native) ? undefined :
+                  result;
+      }
+    }
+    console.table(results);
+  }
+
+  async function runTests(eventSystems, tests) {
+    const results = {};
+    for (let [system, reset] of eventSystems) {
+      system();
+      for (const {name: testName, fun, expect} of tests) {
+
+        const expected = expect instanceof Function ? expect() : expect;
+        setValue(results, testName, "expected", expected);
+
+        let result = [];
+        fun(result);
+        await nextTick2(() => 1);  //just wait a t1ck, for any queued propagation to complete
+        setValue(results, testName, system.name, result.join(""));
+        await nextTick2(() => 1);  //just wait a t0ck, for any queued tasks of the propagation to complete
+      }
+      reset();
+    }
+    return nextTick2(function () {
+      printResults(results);
+    });
+  }
+</script>
+
+<script type="module">
+  import {
+    addEventListenerOptionScopedUnstoppable,
+    removeEventListenerOptionScopedUnstoppable
+  } from "../src/old/EventListenersOptionUnstoppableScoped.js";
+  import {addEventIsStoppedScoped, removeEventIsStoppedScoped} from "../src/old/ScopedStopPropagation.js";
+
+  /**
+   * @param byDefault, if true, then all events are isScoped=true by default/globally
+   */
+  function NATIVE() {
+  }
+
+  function SCOPED_STOP(byDefault) {
+    const isStopped = addEventIsStoppedScoped();
+    addEventListenerOptionScopedUnstoppable(isStopped);
+    byDefault && Object.defineProperty(Event.prototype, "isScoped", {value: true});
+  }
+
+  function REMOVE_SCOPED_STOP() {
+    Object.defineProperty(Event.prototype, "isScoped", {value: undefined});
+    removeEventListenerOptionScopedUnstoppable();
+    removeEventIsStoppedScoped();
+  }
+
+  const eventSystems = [
+    [NATIVE, NATIVE],
+    [SCOPED_STOP, REMOVE_SCOPED_STOP],
+  ];
+
+  import {testUnstoppable, cancelBubbleTests} from "./testUnstoppable.js";
+  import {testStopProp, testStopProp2} from "./testStopPropagation.js";
+  import {testIsStopped} from "./testIsStopped.js";
+
+  (async function () {
+    await runTests(eventSystems, testUnstoppable);
+    await runTests(eventSystems, cancelBubbleTests);
+    await runTests(eventSystems, testStopProp);
+    await runTests(eventSystems, testStopProp2);
+    await runTests(eventSystems, testIsStopped);
+  })();
+  //todo
+  // 1. test stopPropagation thoroughly
+</script>

@@ -13,11 +13,11 @@
 export function currentEventContext(event) {//todo rename to getPropagationRootNode(event)?? //todo move to computePaths.js??
   if (!event.currentTarget)
     return null;
-  const two = currentEventContext2(event);
+  // const two = currentEventContext2(event);
   const root = event.currentTarget.getRootNode ? event.currentTarget.getRootNode() : event.currentTarget;
   let one = root === document ? window : root;
-  if (two !== one)
-    debugger
+  // if (two !== one)
+  //   debugger
   return one;
 }
  
