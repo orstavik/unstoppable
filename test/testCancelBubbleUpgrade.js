@@ -50,18 +50,20 @@ export const cancelBubbleTests =[{
     const h2 = document.createElement("h2");
     h1.appendChild(h2);
     h1.addEventListener("click", function (e) {
-      debugger
       e.stopPropagation();
     }, true);
     h1.addEventListener("click", function (e) {
       res.push("omg"); //this should never run
     });
-    debugger
     let click = new MouseEvent("click", {composed: true, bubbles: true});
     h2.dispatchEvent(click);
-    res.push(click.cancelBubble);
-  },
+    res.push(click.cancelBubble); //todo the browser returns false, when the event is finished propagating.
+    // That means that the browser cleans up the event when it is finished propagating.
+    //this means we need to run async await on the wrapper for dispatchEvent.
+
+      },
   expect: "1",
+//todo test for the stopImmediatePropgation() behavior
 
   //todo test cancelBubble on
   // *. different event listeners on the same target
