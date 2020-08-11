@@ -5,7 +5,7 @@ let dispatchEventOG;
 
 const stops = new Map();
 const immediateStops = new Set();
-const beforeStops = new Set();
+const hasDispatched = new Set();
 
 /**
  * This method checks if stopPropagation() has been called on this element before event begins propagation.
@@ -16,21 +16,29 @@ const beforeStops = new Set();
  * @param event
  * @returns {boolean}
  */
-export function checkStops(event) {
-  const beforeStopped = beforeStops.has(this);
-  beforeStops.delete(event);
+export function reset(event) {
+  hasDispatched.delete(event);
   stops.delete(event);
   immediateStops.delete(event);
-  return beforeStopped;
+}
+
+export function markDispatched(event){
+  hasDispatched.add(event);
 }
 
 /**
  * Upgrade the Event.prototype.cancelBubble property.
  *
  * event.cancelBubble now returns:
- *  0: no stopPropagation() has been called on the event.
- *     This maps 1:1 to all instances where the original cancelBubble returns false.
- *  1: a) stopImmediatePropagation() has previously been called on the event.
+ *  0: the event has not been stopped. Old value: false.
+ *     No stopPropagation() nor stopImmediatePropagation() has been called on the event
+ *     (since it last completed a propagation).
+ *  1: the event has been stopped. Old value: true.
+ *  2: the event has been stopped. Old value: true.
+ *     But, 2 instead of 1 signals that the event is still in the same phase and
+ *     at the same event target node as when the regular stopPropagation() call was made, and
+ *     therefore can trigger other event listeners on the same node and in the same target phase.
+ *  a) stopImmediatePropagation() has previously been called on the event.
  *     b) stopPropagation() or stopImmediatePropagation() has been called on the event before it began propagating.
  *     c) stopPropagation() has previously been called on the event from an event listener attached to another event
  *        target.
@@ -70,39 +78,45 @@ export function upgradeCancelBubble() {
 
   Object.defineProperty(EventTarget.prototype, "dispatchEvent", {
     value: function (event, ...args) {
-      !checkStops(this) && dispatchEventOG.value.call(this, event, ...args);
+      event.cancelBubble ?
+        reset(event) :
+        markDispatched(event);
+      dispatchEventOG.value.call(this, event, ...args);
     }
   });
   Object.defineProperties(Event.prototype, {
     "stopPropagation": {
       value: function stopPropagation() {
-        if (this.eventPhase === 0) {
-          beforeStops.add(this);
-          return;
-        }
+        if (this.eventPhase === 0)
+          return this.stopImmediatePropagation();
         stops.set(this, {currentTarget: this.currentTarget, eventPhase: this.eventPhase});
         stopPropagationOG.value.call(this);
       }
     },
     "stopImmediatePropagation": {
       value: function stopImmediatePropagation() {
-        if (this.eventPhase === 0) {
-          beforeStops.add(this);
-          return;
-        }
+        //old state lingering. No-one has called stopPropagation() since last propagation concluded.
+        //reset old state, and then register the new call.
+        if (this.eventPhase === 0 && hasDispatched.has(this))
+          reset(this);
         immediateStops.add(this);
         stopImmediatePropagationOG.value.call(this);
       }
     },
     "cancelBubble": {
       get: function () {
-        if (immediateStops.has(this) || beforeStops.has(this))
+        //old state lingering. This means no-one has called stopPropagation() since last propagation concluded.
+        if (this.eventPhase === 0 && hasDispatched.has(this)) {
+          reset(this);
+          return 0;
+        }
+        if (immediateStops.has(this))
           return 1;
         const stop = stops.get(this);
         if (!stop)
-          return 0
+          return 0;
         if (stop.currentTarget === this.currentTarget && stop.eventPhase === this.eventPhase)
-          return 2;
+          return 2; //it is cancelled, but event listeners on the same event target and phase is still running.
         return 1;
       },
       set: function (val) {

@@ -27,13 +27,13 @@
       const native = testResults.NATIVE;
       for (let [systemName, result] of Object.entries(testResults)) {
         if (systemName === "NATIVE")
-          testResults[systemName] = result === expected ? 1 : result;
+          testResults[systemName] = result === expected ? 1 : result + " !== " + expected;
         else
           testResults[systemName] =
             (result === expected && result === native) ? null :
               (result === expected) ? 1 :
                 (result === native) ? undefined :
-                  result;
+                  result + " !== " + expected;
       }
     }
     console.table(results);
@@ -83,13 +83,17 @@
     [upgradeCancelBubble, degradeCancelBubble]
   ];
 
-  import {cancelBubbleTests} from "./testCancelBubbleUpgrade.js";
+  import {cancelBubbleStopPropagationTests, cancelBubbleStopImmediateTests, cancelBubbleEqualTrueTests} from "./testCancelBubbleUpgrade.js";
+  import {dispatchTwice} from "./testDispatchTwice.js";
   // import {testUnstoppable} from "./testUnstoppable.js";
   // import {testStopProp, testStopProp2} from "./testStopPropagation.js";
   // import {testIsStopped} from "./testIsStopped.js";
 
   (async function () {
-    await runTests(cancelBubbleNative, cancelBubbleTests);
+    await runTests(cancelBubbleNative, cancelBubbleStopPropagationTests);
+    await runTests(cancelBubbleNative, cancelBubbleEqualTrueTests);
+    await runTests(cancelBubbleNative, cancelBubbleStopImmediateTests);
+    await runTests(cancelBubbleNative, dispatchTwice);
     // await runTests(eventSystems, testIsStopped);
     // await runTests(eventSystems, testUnstoppable);
     // await runTests(eventSystems, testStopProp);
