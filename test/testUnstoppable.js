@@ -1,6 +1,5 @@
-// let res;
 export const testUnstoppable = [{
-  name: "unstoppable: normal stopPropagation",
+  name: "unstoppable: stopImmediatePropagation",
   fun: function(res) {
     const h1 = document.createElement("h1");
     h1.addEventListener("click", e => e.stopImmediatePropagation());
@@ -8,6 +7,22 @@ export const testUnstoppable = [{
     h1.click();
   },
   expect: "b",
+}, {
+  name: "unstoppable: stopPropagation",
+  fun: function(res) {
+    const h1 = document.createElement("h1");
+    const h2 = document.createElement("h2");
+    h1.appendChild(h2);
+    h1.addEventListener("click", function (e) {
+      e.stopPropagation();
+      res.push(e.cancelBubble);
+    }, true);
+    h1.addEventListener("click", function (e) {
+      res.push(e.cancelBubble);
+    }, {unstoppable: true});
+    h2.click();
+  },
+  expect: "21",
 // }, {
 //   name: "unstoppable: different type",
 //   fun: function(res) {

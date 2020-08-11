@@ -34,10 +34,12 @@ function removeWrapper(target, type, options, cb) {
 
 let addEventListenerOG;
 let removeEventListenerOG;
+let stopPropagationOG;
+let stopImmediatePropagationOG;
 
 function wrapCallbackCheckCancelBubble(cb) {
   return function (e) {
-    e.cancelBubble === 1 && cb.call(this, e);
+    e.cancelBubble !== 1 && cb.call(this, e);
   };
 }
 
@@ -47,34 +49,45 @@ function wrapCallbackCheckCancelBubble(cb) {
  * that distinguish between stopPropagation() and stopImmediatePropagation()
  */
 export function addEventListenerOptionUnstoppable() {
-  upgradeCancelBubble();
 
-  addEventListenerOG = EventTarget.prototype.addEventListener;
-  removeEventListenerOG = EventTarget.prototype.removeEventListener;
+  addEventListenerOG = Object.getOwnPropertyDescriptor(EventTarget.prototype, "addEventListener");
+  removeEventListenerOG = Object.getOwnPropertyDescriptor(EventTarget.prototype, "removeEventListener");
 
   function addEventListenerUnstoppable(type, cb, options) {
     if (hasWrapper(this, type, cb, options))
       return;
     const wrapped = options?.unstoppable ? cb : wrapCallbackCheckCancelBubble(cb);
     setWrapper(this, type, cb, options, wrapped)
-    addEventListenerOG.call(this, type, wrapped, options);
+    addEventListenerOG.value.call(this, type, wrapped, options);
   }
 
   function removeEventListenerUnstoppable(type, cb, options) {
     const wrappedCbOrCb = removeWrapper(this, type, options, cb) || cb;
-    removeEventListenerOG.call(this, type, wrappedCbOrCb, options);
+    removeEventListenerOG.value.call(this, type, wrappedCbOrCb, options);
   }
 
   Object.defineProperties(EventTarget.prototype, {
     addEventListener: {value: addEventListenerUnstoppable},
     removeEventListener: {value: removeEventListenerUnstoppable}
   });
+
+  stopPropagationOG = Object.getOwnPropertyDescriptor(Event.prototype, "stopPropagation");
+  stopImmediatePropagationOG = Object.getOwnPropertyDescriptor(Event.prototype, "stopImmediatePropagation");
+  Object.defineProperties(Event.prototype, {
+    stopPropagation: {value: function(){}},
+    stopImmediatePropagation: {value: function(){}}
+  });
+  upgradeCancelBubble();
 }
 
 export function removeEventListenerOptionUnstoppable() {
-  Object.defineProperties(EventTarget.prototype, {
-    addEventListener: {value: addEventListenerOG},
-    removeEventListener: {value: removeEventListenerOG}
-  });
   degradeCancelBubble();
+  Object.defineProperties(Event.prototype, {
+    stopPropagation: stopPropagationOG,
+    stopImmediatePropagation: stopImmediatePropagationOG
+  });
+  Object.defineProperties(EventTarget.prototype, {
+    addEventListener: addEventListenerOG,
+    removeEventListener: removeEventListenerOG
+  });
 }
