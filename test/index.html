@@ -64,19 +64,19 @@
 
 <script type="module">
   import {upgradeCancelBubble, degradeCancelBubble} from "../src/upgradeCancelBubble.js";
-  // import {
-  //   addEventListenerOptionUnstoppable,
-  //   removeEventListenerOptionUnstoppable
-  // } from "../src/EventListenersOptionUnstoppable.js";
+  import {
+    addEventListenerOptionUnstoppable,
+    removeEventListenerOptionUnstoppable
+  } from "../src/EventListenersOptionUnstoppable.js";
 
   function NATIVE() {
   }
 
-  // const eventSystems = [
-  //   [NATIVE, NATIVE],
-  //   [upgradeCancelBubble, degradeCancelBubble],
-  //   [addEventListenerOptionUnstoppable, removeEventListenerOptionUnstoppable]
-  // ];
+  const eventSystems = [
+    [NATIVE, NATIVE],
+    [upgradeCancelBubble, degradeCancelBubble],
+    [addEventListenerOptionUnstoppable, removeEventListenerOptionUnstoppable]
+  ];
 
   const cancelBubbleNative = [
     [NATIVE, NATIVE],
@@ -85,7 +85,7 @@
 
   import {cancelBubbleStopPropagationTests, cancelBubbleStopImmediateTests, cancelBubbleEqualTrueTests} from "./testCancelBubbleUpgrade.js";
   import {dispatchTwice} from "./testDispatchTwice.js";
-  // import {testUnstoppable} from "./testUnstoppable.js";
+  import {testUnstoppable} from "./testUnstoppable.js";
   // import {testStopProp, testStopProp2} from "./testStopPropagation.js";
   // import {testIsStopped} from "./testIsStopped.js";
 
@@ -95,7 +95,7 @@
     await runTests(cancelBubbleNative, cancelBubbleStopImmediateTests);
     await runTests(cancelBubbleNative, dispatchTwice);
     // await runTests(eventSystems, testIsStopped);
-    // await runTests(eventSystems, testUnstoppable);
+    await runTests(eventSystems, testUnstoppable);
     // await runTests(eventSystems, testStopProp);
     // await runTests(eventSystems, testStopProp2);
   })();
