@@ -1,0 +1,26 @@
+<closed-comp></closed-comp>
+
+<script>
+  (function () {
+
+    class ClosedComp extends HTMLElement {
+      constructor() {
+        super();
+        const shadow = this.attachShadow({mode: "closed"});
+        shadow.innerHTML = `<span>Hello</span> sunshine!`;
+        this._hello = shadow.children[0];
+      }
+    }
+    customElements.define("closed-comp", ClosedComp);
+
+    const closedComp = document.querySelector("closed-comp");
+
+    closedComp.addEventListener("click", e => console.log("capture listener", e.eventPhase, e.composedPath()), true);
+    closedComp.addEventListener("click", e => e.stopPropagation(), true);
+    closedComp.addEventListener("click", e => console.log("bubble listener", e.eventPhase, e.composedPath()));
+
+    closedComp._hello.click();  //yields only one event listener, as the target phase is not really true
+    console.log("---")
+    closedComp.click();         //yields two event listeners, as the target phase is handled as such
+  })();
+</script>
