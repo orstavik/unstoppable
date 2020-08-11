@@ -1,6 +1,6 @@
-import {addEventIsStoppedScoped, removeEventIsStoppedScoped} from "./old/ScopedStopPropagation.js";
+import {upgradeCancelBubble, degradeCancelBubble} from "./upgradeCancelBubble.js";
 
-//target* => cb* => type+" "+capture => cbOnce
+//target* => cb* => type+" "+capture => cb/wrappedCb
 const targetCbWrappers = new WeakMap();
 
 function makeKey(type, options) {
@@ -34,51 +34,47 @@ function removeWrapper(target, type, options, cb) {
 
 let addEventListenerOG;
 let removeEventListenerOG;
-//scoped event listeners will only obey stopPropagations called inside the same scope.
+
+function wrapCallbackCheckCancelBubble(cb) {
+  return function (e) {
+    e.cancelBubble === 1 && cb.call(this, e);
+  };
+}
+
 //unstoppable event listeners will not obey any stopPropagations.
-export function addEventListenerOptionScopedUnstoppable() {
+/**
+ * depends on the upgraded version of cancelBubble
+ * that distinguish between stopPropagation() and stopImmediatePropagation()
+ */
+export function addEventListenerOptionUnstoppable() {
+  upgradeCancelBubble();
+
   addEventListenerOG = EventTarget.prototype.addEventListener;
   removeEventListenerOG = EventTarget.prototype.removeEventListener;
-
-  const isStopped = addEventIsStoppedScoped();
 
   function addEventListenerUnstoppable(type, cb, options) {
     if (hasWrapper(this, type, cb, options))
       return;
-    let wrapped;
-    if (options instanceof Object && options.unstoppable) {
-      wrapped = cb;
-    } else if (options instanceof Object && options.scoped) {
-      wrapped = function (e) {
-        !isStopped(e, true) && cb.call(this, e);       //when we control dispatch, these two checks can be done before we add
-                                                       // the event listener to the task queue
-      };                                               //when we are reacting to the native dispatch, we have to run the listeners.
-    } else {
-      wrapped = function (e) {                         //we check the listener options, and then we check the e.isScoped and isStopped(event, scoped)
-        !isStopped(e, e.isScoped) && cb.call(this, e); //scoped = e.isScoped || listener.scoped === true
-      };                                               //isStopped = !listener.unstoppable && isStopped(event, scoped)
-    }                                                  //if (!isStopped), then add the listener to the queue
+    const wrapped = options?.unstoppable ? cb : wrapCallbackCheckCancelBubble(cb);
     setWrapper(this, type, cb, options, wrapped)
     addEventListenerOG.call(this, type, wrapped, options);
   }
 
   function removeEventListenerUnstoppable(type, cb, options) {
-    //tries to remove both the stoppable and the unstoppable wrapper. Don't know which one was added here.
-    const args = removeWrapper(this, type, options, cb) || cb;
-    removeEventListenerOG.call(this, type, args, options);
+    const wrappedCbOrCb = removeWrapper(this, type, options, cb) || cb;
+    removeEventListenerOG.call(this, type, wrappedCbOrCb, options);
   }
 
   Object.defineProperties(EventTarget.prototype, {
     addEventListener: {value: addEventListenerUnstoppable},
     removeEventListener: {value: removeEventListenerUnstoppable}
   });
-  return isStopped;
 }
 
-export function removeEventListenerOptionScopedUnstoppable(){
+export function removeEventListenerOptionUnstoppable() {
   Object.defineProperties(EventTarget.prototype, {
     addEventListener: {value: addEventListenerOG},
     removeEventListener: {value: removeEventListenerOG}
   });
-  removeEventIsStoppedScoped();
+  degradeCancelBubble();
 }

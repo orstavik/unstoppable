@@ -1,0 +1,42 @@
+<h1>bug in firefox</h1>
+<p>two default actions that should exclude each other are run.</p>
+<a href="#radio-interference">
+  <input type="radio" name="x">
+  <input type="radio" name="x">
+</a>
+
+<a href="#checkbox-interference">
+  <input type="checkbox">
+</a>
+
+input type radio nor input type checkbox does not block the default action of links
+
+<p>When you use input[reset], then there is only one default action run. This is behavior as expected.</p>
+<pr>When you use input[submit], either if you click or press enter to trigger the input[submit] button,
+  then you get two hashchange events.</pr>
+<form action="#form">
+  <a href="#a">
+    <input type="text" value="you can also click on submit by pressing enter on me.">
+    <input type="submit">
+    <input type="reset">
+  </a>
+</form>
+
+<a href="#a2">
+  <form action="#form2">
+    <input type="text" value="you can also click on submit by pressing enter on me.">
+    <input type="submit">
+    <input type="reset">
+  </form>
+</a>
+
+<script>
+  //short scripts that log the relevant events.
+  function log(e) {
+    return console.log(e.type, location.hash, e, e.target);
+  }
+
+  window.addEventListener("click", log);
+  window.addEventListener("keypress", log);
+  window.addEventListener("hashchange", log);
+</script>

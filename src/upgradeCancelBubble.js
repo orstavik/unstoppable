@@ -70,7 +70,7 @@ export function upgradeCancelBubble() {
 
   Object.defineProperty(EventTarget.prototype, "dispatchEvent", {
     value: function (event, ...args) {
-      checkStops(this) && dispatchEventOG.call(this, event, ...args);
+      !checkStops(this) && dispatchEventOG.value.call(this, event, ...args);
     }
   });
   Object.defineProperties(Event.prototype, {
@@ -81,7 +81,7 @@ export function upgradeCancelBubble() {
           return;
         }
         stops.set(this, {currentTarget: this.currentTarget, eventPhase: this.eventPhase});
-        stopPropagationOG.call(this);
+        stopPropagationOG.value.call(this);
       }
     },
     "stopImmediatePropagation": {
@@ -91,12 +91,12 @@ export function upgradeCancelBubble() {
           return;
         }
         immediateStops.add(this);
-        stopImmediatePropagationOG.call(this);
+        stopImmediatePropagationOG.value.call(this);
       }
     },
     "cancelBubble": {
       get: function () {
-        if (immediateStops.has(this))
+        if (immediateStops.has(this) || beforeStops.has(this))
           return 1;
         const stop = stops.get(this);
         if (!stop)
@@ -112,12 +112,12 @@ export function upgradeCancelBubble() {
   });
 }
 
-export function resetCancelBubble() {
+export function degradeCancelBubble() {
   Object.defineProperties(Event.prototype, {
     "stopPropagation": stopPropagationOG,
     "stopImmediatePropagation": stopImmediatePropagationOG,
+    "cancelBubble": cancelBubbleOG,
   });
-  delete Event.prototype.isStopped;
   Object.defineProperty(EventTarget.prototype, "dispatchEvent", dispatchEventOG);
 }
 

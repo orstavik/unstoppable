@@ -1,0 +1,27 @@
+<!--<a href="#a2">   if you put the link here, you get a similar problem.-->
+<form action="#form">
+  <a href="#a">
+    <input type="text" value="change my text and press enter.">
+    <input type="submit">
+    <input type="reset">
+  </a>
+</form>
+<!--</a>-->
+
+<a href="#a2">
+  <form action="#form2">
+    <input type="text" value="you can also click on submit by pressing enter on me.">
+    <input type="submit">
+    <input type="reset">
+  </form>
+</a>
+
+<script>
+  function log(e) {
+    return console.log(e.type, location.hash, e);
+  }
+
+  // window.addEventListener("keypress", log);
+  // window.addEventListener("click", log);
+  window.addEventListener("hashchange", log);
+</script>

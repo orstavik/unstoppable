@@ -1,0 +1,49 @@
++<details>
+  <summary>
+    <bombs-away>
+      <i>hello</i>
+    </bombs-away>
+  </summary>
+  Remember, your shadow is your only true companion.
+</details>
+
+
+<bombs-away>
+  <details>
+    <summary>
+      <b>sunshine</b>
+    </summary>
+    After the light of bombs comes darkness.
+  </details>
+</bombs-away>
+
+<script>
+  class BombsAway extends HTMLElement {
+    constructor() {
+      super();
+      const shadowRoot = this.attachShadow({mode: "closed"});
+      shadowRoot.innerHTML = `<slot></slot>`;
+      shadowRoot.addEventListener("click", e => e.preventDefault());
+    }
+  }
+
+  customElements.define("bombs-away", BombsAway);
+
+  const i = document.querySelector("i");
+  const b = document.querySelector("b");
+
+  i.click();
+  b.click();
+</script>
+
+
+<p>
+  Click on the text to see the default action being prevented from inside the shadowDom of a slotting web component.
+  If you click on the arrow of the first summary, this click is not captured by the bombs-away element, and
+  thus will as expected let the default action through.
+</p>
+<div>
+  This illustrates the bomb, global nature of preventDefault. The global property of preventDefault reverses the flow
+  of control from the outside lightDOM context (the user of the web component)
+  to the inner shadowDOM context (the web component being used).
+</div>

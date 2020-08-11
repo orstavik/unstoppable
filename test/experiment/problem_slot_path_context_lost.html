@@ -47,3 +47,37 @@
 <p>
   This experiment illustrate
 </p>
+
+The logic of event propagation is that DOM mutations should not influence the propagation path,
+as this would become immensely complex, very quickly. For example, if event listeners mutating the DOM moved DOM-nodes
+located in the propagation path up and down the propagation path, and these moves should be reflected in the nodes that
+the event propagated to next, then this could cause infinite loops. Furthermore, new DOM nodes could be added and existing
+DOM nodes removed, which would make it
+uncertain which event listeners are triggered when and why. The browser's choice is therefore clear, the state of the DOM when the event
+begins propagation, is LOCKED in the events composedPath(), and DOM mutations during an events propagation should not influence
+the flow of propagation.
+
+The composedPath() represents a snapshot of one line in the DOM that is an event's propagation path.
+
+From this snapshot, most relationships between nodes are inferable. Easily. You can easily trace the
+normal parent child relationships between elements, and assess which DOM context (ie. document) which element belonged
+to at the beginning of propagation.
+
+But. There is one notable exception: It is not possible looking at the composedPath() alone to see if an element was a)
+slotted into another web component or b) was a fallback node of that slot. Both such elements would look the same.
+
+To see if an element is a) slotted from the lightDOM of one document into the shadowDOM of another document, or b) is a
+fallback node of a slot element inside the shadowDOM, you would need to perform a check:
+1. has the element that is positioned as a child of a slot element in the composedPath() list the slot element as its
+.assignedSlot property? if yes, then the element has been slotted into the shadowDOM; if no, then the element is a fallback
+node of the slot element.
+Alternative checks such as seeing if the slot === slottedElement.parentNode or if slot.assignedNodes().indexOf(slottedElement)>=0
+works as well.
+
+The problem with these tests, is that they all rely on the current state of the DOM. This means that if an event listener
+mutates the DOM and moves either:
+1. a slotted element into the shadowDOM from the lightDOM to become a childNode/fallback element of that same slot, or
+2. vice versa, a childNode/fallback node is moved from the shadowDOM to the lightDOM to become a slotted element of that DOM,
+
+it would be impossible to see *which DOM context the slotted/childNode element belonged to when the event began propagation*.
+And this means that relevant information about the composedPath() is lost.
