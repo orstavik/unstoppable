@@ -1,10 +1,14 @@
 import {cleanDom} from "./useCase1.js";
 
-// let res = "";
-
+//todo . test when stopPropagation called inside shadowDom, both normal and slotted.
 export const testStopProp = [{
   name: "shadowTorpedo: stopPropagation(true)",
   fun: function(res) {
+
+    const h1 = document.createElement("h1");
+    const h2 = document.createElement("h2");
+    h1.appendChild(h2);
+
     // res = "";
       const dom = cleanDom();
   for (let elName in dom) {
@@ -22,9 +26,6 @@ export const testStopProp = [{
     dom.shadowH1.dispatchEvent(new Event("click", {composed: true, bubbles: true}));
   },
   expect: "div slot slotRoot slotSpan slotSlot shadowComp shadowRoot shadowH1 shadowH1 shadowComp slotSlot slotSpan slotRoot slot div ",
-  result: function () {
-    return res;
-  }
 }, {
   name: "captureTorpedo: stopPropagation(true)",
   fun: function(res) {
@@ -45,9 +46,6 @@ export const testStopProp = [{
     dom.shadowH1.dispatchEvent(new Event("click", {composed: true, bubbles: true}));
   },
   expect: "div slotRoot slotSpan slotSlot shadowRoot shadowH1 shadowH1 shadowRoot slotSlot slotSpan slotRoot ",
-  result: function () {
-    return res;
-  }
 }, {
   name: "slotTorpedo: stopPropagation(true)",
   fun: function(res) {
@@ -68,9 +66,6 @@ export const testStopProp = [{
     dom.shadowH1.dispatchEvent(new Event("click", {composed: true, bubbles: true}));
   },
   expect: "div slot slotRoot slotSpan slotSlot shadowComp shadowRoot shadowH1 shadowH1 shadowRoot shadowComp slotSlot slot div ",
-  result: function () {
-    return res;
-  }
 }, {
   name: "slotCaptureTorpedo: stopPropagation(true)",
   fun: function(res) {
@@ -91,9 +86,6 @@ export const testStopProp = [{
     dom.shadowH1.dispatchEvent(new Event("click", {composed: true, bubbles: true}));
   },
   expect: "div slot slotRoot shadowComp shadowRoot shadowH1 shadowH1 shadowRoot shadowComp slot div ",
-  result: function () {
-    return res;
-  }
 }];
 
 export const testStopProp2 = [{
@@ -121,9 +113,6 @@ export const testStopProp2 = [{
     dom.shadowH1.dispatchEvent(new Event("click", {composed: true, bubbles: true}));
   },
   expect: "DifferentScope unstoppable",
-  result: function () {
-    return res;
-  }
 }, {
   name: "shadowTorpedo: addEventListener(.., .., {scoped: true}/{unstoppable: true} ) 2",
   fun: function(res) {
@@ -145,9 +134,6 @@ export const testStopProp2 = [{
     dom.shadowH1.dispatchEvent(new Event("click", {composed: true, bubbles: true}));
   },
   expect: "DifferentScope",
-  result: function () {
-    return res;
-  }
 }, {
   name: "shadowTorpedo: Event.isScoped",
   fun: function(res) {
@@ -169,7 +155,5 @@ export const testStopProp2 = [{
     dom.shadowH1.dispatchEvent(event);
   },
   expect: "DifferentScope",
-  result: function () {
-    return res;
-  }
+
 }];

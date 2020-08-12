@@ -63,42 +63,33 @@
 </script>
 
 <script type="module">
-  import {upgradeCancelBubble, degradeCancelBubble} from "../src/upgradeCancelBubble.js";
-  import {
-    addEventListenerOptionUnstoppable,
-    removeEventListenerOptionUnstoppable
-  } from "../src/EventListenersOptionUnstoppable.js";
+  import {upgradeCancelBubble, downgradeCancelBubble} from "../src/upgradeEvent_capture_cancelBubble.js";
+  import {upgradeAddEventListener, downgradeAddEventListener} from "../src/runEventListener.js";
 
   function NATIVE() {
   }
 
   const eventSystems = [
     [NATIVE, NATIVE],
-    // [upgradeCancelBubble, degradeCancelBubble],
-    [addEventListenerOptionUnstoppable, removeEventListenerOptionUnstoppable]
-  ];
-
-  const cancelBubbleNative = [
-    [NATIVE, NATIVE],
-    [upgradeCancelBubble, degradeCancelBubble]
+    [upgradeCancelBubble, downgradeCancelBubble],
+    [upgradeAddEventListener, downgradeAddEventListener]
   ];
 
   import {cancelBubbleStopPropagationTests, cancelBubbleStopImmediateTests, cancelBubbleEqualTrueTests} from "./testCancelBubbleUpgrade.js";
   import {dispatchTwice} from "./testDispatchTwice.js";
   import {testUnstoppable} from "./testUnstoppable.js";
+  import {testHostNodeTorpedo} from "./testHostNodeTorpedo.js";
   // import {testStopProp, testStopProp2} from "./testStopPropagation.js";
-  // import {testIsStopped} from "./testIsStopped.js";
 
   (async function () {
-    await runTests(cancelBubbleNative, cancelBubbleStopPropagationTests);
-    await runTests(cancelBubbleNative, cancelBubbleEqualTrueTests);
-    await runTests(cancelBubbleNative, cancelBubbleStopImmediateTests);
-    await runTests(cancelBubbleNative, dispatchTwice);
-    // await runTests(eventSystems, testIsStopped);
+    await runTests(eventSystems, cancelBubbleStopPropagationTests);
+    await runTests(eventSystems, cancelBubbleEqualTrueTests);
+    await runTests(eventSystems, cancelBubbleStopImmediateTests);
+    await runTests(eventSystems, dispatchTwice);
     await runTests(eventSystems, testUnstoppable);
+    await runTests(eventSystems, testHostNodeTorpedo);
     // await runTests(eventSystems, testStopProp);
     // await runTests(eventSystems, testStopProp2);
   })();
-  //todo
-  // 1. test stopPropagation thoroughly
+  //todo. test when stopPropagation called inside shadowDom, both normal and slotted.
 </script>
