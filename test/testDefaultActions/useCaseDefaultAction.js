@@ -67,7 +67,7 @@ export function aaH1() {
 export function aaCheckbox() {
   const aa = document.createElement("a-a");
   aa.setAttribute("href", "#sunshine")
-  const input = document.querySelector("input");
+  const input = document.createElement("input");
   input.setAttribute("type", "checkbox")
   aa.appendChild(input);
 
