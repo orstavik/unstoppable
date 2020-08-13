@@ -1,6 +1,6 @@
 /*
- * SCOPED_PATHS are a set of nested arrays which contain the eventTarget divided by DOM contexts.
- * If you flatten the SCOPED_PATHS, ie. scopedPaths(el, trueOrFalse).flat(Infinity),
+ * COMPUTE_PATHS are a set of nested arrays which contain the eventTarget divided by DOM contexts.
+ * If you flatten the COMPUTE_PATHS, ie. scopedPaths(el, trueOrFalse).flat(Infinity),
  * then you will get the same output as the composedPath() for that element
  * if a composed: trueOrFalse event were dispatched to it.
  *
@@ -69,10 +69,15 @@ export function lastPropagationTarget(event) {
   if (event.bubbles) return composedPath[composedPath.length - 1];
   if (!event.composed) return composedPath[0];
   //non-bubbling and composed
-  let last = event.target;
-  for (let i = 1; i < composedPath.length - 2; i++) {
-    if (composedPath[i] instanceof ShadowRoot)
+  let last = composedPath[0];
+  let slots = 0;
+  for (let i = 1; i < composedPath.length - 1; i++) {
+    if (composedPath[i] instanceof ShadowRoot && slots === 0)
       last = composedPath[++i];
+    else if(composedPath[i] instanceof ShadowRoot)
+      slots--;
+    else if(composedPath[i] instanceof HTMLSlotElement)
+      slots++;
   }
   return last;
 }
