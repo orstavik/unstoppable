@@ -25,8 +25,10 @@ function getEventListeners(target, type, phase) {
 
 function runEventListener(event, listener) {
   const target = this;
-  // if(!event.eventContexts)
-  //   Object.defineProperty(event, "eventContexts", {value: todothat, configurable: false, writable: false});
+  if (!event.composedPathContexts) { //patch composedPathContexts at first event listener invocation for this event.
+    const composedPathContexts = event.composedPath().map(target => target.getRootNode());
+    Object.defineProperty(event, "composedPathContexts", {get: () => composedPathContexts});   //, configurable: false, writable: false
+  }
   if (listener.removed)                                  //dynamic removing of event listener during propagation on the same eventTarget.
     return;
   Object.defineProperty(event, "capture", {value: listener.capture, configurable: true}); //cancelBubble rely on capture and currentTarget being up to date
@@ -88,7 +90,7 @@ function removeListener(target, type, cb, outsideCapture) {
   const list = dict[type];
   if (!list)
     return undefined;
-  const listenerIndex = list.find(({listener, capture}) => listener === cb && outsideCapture === capture);
+  const listenerIndex = list.findIndex(({listener, capture}) => listener === cb && outsideCapture === capture);
   if (listenerIndex === -1)
     return undefined;
   return list.splice(listenerIndex, 1)[0];
@@ -115,8 +117,14 @@ export function upgradeAddEventListener(eventListenerOptions = {unstoppable: fal
   stopPropagationOG = Object.getOwnPropertyDescriptor(Event.prototype, "stopPropagation");
   stopImmediatePropagationOG = Object.getOwnPropertyDescriptor(Event.prototype, "stopImmediatePropagation");
   Object.defineProperties(Event.prototype, {
-    stopPropagation: {value: function(){}},
-    stopImmediatePropagation: {value: function(){}}
+    stopPropagation: {
+      value: function () {
+      }
+    },
+    stopImmediatePropagation: {
+      value: function () {
+      }
+    }
   });
 
   function addEventListenerUpgraded(type, cb, options) {
@@ -134,9 +142,10 @@ export function upgradeAddEventListener(eventListenerOptions = {unstoppable: fal
   function removeEventListenerUpgraded(type, cb, options) {
     const capture = !!(options instanceof Object ? options.capture : options);
     const listener = removeListener(this, type, cb, capture);
+    if (!listener)
+      return;
     listener.removed = true;
-    if (listener)
-      removeEventListenerOG.value.call(this, type, listener, capture);
+    removeEventListenerOG.value.call(this, type, listener, capture);
   }
 
   Object.defineProperties(EventTarget.prototype, {
