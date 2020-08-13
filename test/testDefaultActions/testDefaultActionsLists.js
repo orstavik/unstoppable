@@ -9,11 +9,6 @@ function spoofIsTrusted(e) {
   });
 }
 
-//todo the nativeDefaultActions
-//1. rename element to host
-//2. add irreversible to dblclick
-//3. rename nativeDefaultActions() to getDefaultActions()
-
 function printDefaultAction(action) {
   action = Object.assign({}, action);
   if (action.host)

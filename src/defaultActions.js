@@ -1,5 +1,5 @@
 import {lastPropagationTarget} from "./computePaths.js";
-import {nativeDefaultActions} from "https://cdn.jsdelivr.net/gh/orstavik/nativeDefaultActions/src/nativeDefaultActions.js";
+import {getDefaultActions as nativeDefaultActions} from "https://cdn.jsdelivr.net/gh/orstavik/nativeDefaultActions@1.1.2/src/getDefaultActions.js";
 import {} from "https://cdn.jsdelivr.net/gh/orstavik/nextTick@1/src/nextTick.js"
 
 let preventDefaultOG;

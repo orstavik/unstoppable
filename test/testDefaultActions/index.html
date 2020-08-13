@@ -109,7 +109,7 @@
 
   (async function () {
     await runTest2(eventSystems, setDefaultActionTest, [
-      [aaH1, '[{"index":0,"element":"H1","task":"bound event_dblclick","native":true,"additive":true}, {"additive":false,"irreversible":false,"native":"kinda","task":"bound requestNavigate","host":"A-A","index":3}]', newClick(BC)],
+      [aaH1, '[{"index":0,"host":"H1","task":"bound event_dblclick","native":true,"additive":true,"irreversible":true}, {"additive":false,"irreversible":false,"native":"kinda","task":"bound requestNavigate","host":"A-A","index":3}]', newClick(BC)],
     ]);
   })();
 </script>
