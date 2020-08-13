@@ -82,12 +82,12 @@
     [REGISTER, REGISTER_off]
   ];
 
-  import {testBasic} from "./unitTests/testBasic.js";
-  import {dynamicTest} from "./unitTests/testDynamic.js";
-  import {testRegistry} from "./unitTests/testRegistry.js";
-  import {testOnce} from "./unitTests/testOnce.js";
-  import {lastTest, lastErrorsTest, last2} from "./unitTests/testLast.js";
-  import {firstTest, firstErrorsTest, first2} from "./unitTests/testFirst.js";
+  import {testBasic} from "./testBasic.js";
+  import {dynamicTest} from "./testDynamic.js";
+  import {testRegistry} from "./testRegistry.js";
+  import {testOnce} from "./testOnce.js";
+  import {lastTest, lastErrorsTest, last2} from "./testLast.js";
+  import {firstTest, firstErrorsTest, first2} from "./testFirst.js";
 
   (async function () {
     await runTests(eventSystems, testBasic);

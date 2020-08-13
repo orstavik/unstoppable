@@ -1,5 +1,7 @@
 import {computePropagationPath, scopedPaths} from "./computePaths.js";
 import {upgradeAddEventListener, downgradeAddEventListener,} from "./runEventListener.js";
+import {prepareDefaultActions} from "./defaultActions.js";
+import {} from "https://cdn.jsdelivr.net/gh/orstavik/nextTick@1/src/nextTick.js"
 
 let getEventListeners;
 let clearStopPropagationStateAtTheStartOfDispatchEvent;
@@ -15,10 +17,16 @@ function initializeEvent(event, target) {
   // if (event.cancelBubble)
   //   return;
 
-  //we need to freeze the composedPath at the point of first dispatch
-  const fullPath = computePropagationPath(this, event.composed, event.bubbles, event?.cutOff);
-  const composedPath = scopedPaths(target, event.composed).flat(Infinity); //todo move the composedPath into the computePropagationPath
   //todo I don't think we need this here, it is a simpler way to build the composed path using .assignedSlot and .host/.parentNode I think
+  const fullPath = computePropagationPath(target, event.composed, event.bubbles, event?.cutOff);
+  const composedPath = scopedPaths(target, event.composed).flat(Infinity); //todo move the composedPath into the computePropagationPath
+  const contexts = composedPath.map(target => {
+    const root = target.getRootNode();
+    return root === document ? window : root;
+  });
+  Object.freeze(composedPath);
+  Object.freeze(contexts);
+
   Object.defineProperties(event, {
     target: {
       get: function () {
@@ -34,7 +42,13 @@ function initializeEvent(event, target) {
     },
     composedPath: {
       value: function () {
-        return composedPath;   //we can cache this if we want
+        return composedPath;
+      },
+      configurable: true
+    },
+    composedPathContexts: {
+      value: function () {
+        return contexts;
       },
       configurable: true
     }
@@ -42,7 +56,8 @@ function initializeEvent(event, target) {
   });
   //todo this needs a little work. unsafe, can be modified.
   // should have better names. etc. review if weakmap/weakset should be used
-  event.defaultActions = [];
+  //todo move this into the defaultAction? or make another method that set
+  event.customDefaultActions = [];
   event.preventDefaults = new Set();
   return fullPath;
 }
@@ -80,22 +95,23 @@ function dispatchEventSync(fullPath, event) {
     for (let listener of getEventListeners(target, event.type, listenerPhase))
       EventTarget.prototype.runEventListener.call(target, event, listener);
   }
+  for (let task of prepareDefaultActions(event)) //lists the default actions currently known
+    task();
 }
 
 async function dispatchEventAsync(fullPath, event) {
-  let macrotask = nextMesoTicks([function () {
-  }], fullPath.length + 1);
-  //todo hack.. problem initiating without knowing the tasks
-  //todo should +2 for bounce: true so we have a mesotask for the default action(s) too.
+  let macrotask = nextMesoTicks([function () {  //todo hack.. problem initiating without knowing the tasks
+  }], fullPath.length + 2);
 
   for (let {target, phase, listenerPhase} of fullPath) {
     updateEvent(event, target, phase);
     let listeners = getEventListeners(target, event.type, listenerPhase);
-    const cbs = listeners.map(listener => EventTarget.prototype.runEventListener.bind(currentTarget, event, listener));
-    return await macrotask.nextMesoTick(cbs);
+    const cbs = listeners.map(listener => EventTarget.prototype.runEventListener.bind(target, event, listener));
+    await macrotask.nextMesoTick(cbs);
   }
-  //todo call processDefaultAction(). If it is async, it should be as a mesotick.
-  return nextMesoTicks(defaultActions);
+  const defActions = prepareDefaultActions(event);
+  if(defActions.length)
+    await macrotask.nextMesoTick(defActions);
 }
 
 /**
@@ -110,10 +126,10 @@ async function dispatchEvent(event) {
   const fullPath = initializeEvent(event, this);
   if (!fullPath)
     return;
-  // if (event.async)
-  //   await dispatchEventAsync(fullPath, event);
-  // else
-  dispatchEventSync(fullPath, event);
+  if (event.async)
+    await dispatchEventAsync(fullPath, event);
+  else
+    dispatchEventSync(fullPath, event);
 
   //events can be dispatched twice, so we reset the events properties the
   updateEvent(event, null, 0); //call it resetEvent
