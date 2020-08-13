@@ -98,7 +98,8 @@
   import {setDefaultActionTest} from "./testDefaultActionsLists.js";
 
   import {
-    aaH1
+    aaH1,
+    aaCheckbox
   } from "./useCaseDefaultAction.js";
 
   const BC = {composed: true, bubbles: true};
@@ -110,6 +111,7 @@
   (async function () {
     await runTest2(eventSystems, setDefaultActionTest, [
       [aaH1, '[{"index":0,"host":"H1","task":"bound event_dblclick","native":true,"additive":true,"irreversible":true}, {"additive":false,"irreversible":false,"native":"kinda","task":"bound requestNavigate","host":"A-A","index":3}]', newClick(BC)],
+      [aaCheckbox, '[{"index":0,"host":"INPUT","task":"bound event_dblclick","native":true,"additive":true,"irreversible":true}, {"index":0,"host":"INPUT","task":"bound requestCheckboxToggle","native":true,"additive":false,"irreversible":false}, {"additive":false,"irreversible":false,"native":"kinda","task":"bound requestNavigate","host":"A-A","index":3}]', newClick(BC)],
     ]);
   })();
 </script>
