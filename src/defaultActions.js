@@ -81,7 +81,7 @@ export function upgradeDefaultAction() {
           return;
         if (!target) {                                 //bombs away!
           this.preventDefaults = true;
-          preventDefaultOG.call(this);
+          preventDefaultOG.value.call(this);
           //todo remove event listener for the post propagation runDefaultAction
           return;
         }
@@ -103,8 +103,9 @@ export function upgradeDefaultAction() {
         if (!host)
           throw new Error("You must associate a host element with the defaultAction task. This host element is usually the host node of a web component.");
         this.customDefaultActions || patchDefaultAction(this);
-        this.defaultActions.push(Object.assign({}, options, {task, host}));
-      }
+        this.customDefaultActions.push(Object.assign({}, options, {task, host, index: this.composedPath().indexOf(host)}));
+      },
+      configurable: true
     }
   });
 }
