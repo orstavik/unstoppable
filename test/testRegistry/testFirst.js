@@ -551,30 +551,4 @@ export const first2 = [{
     dom.slot.dispatchEvent(new Event("click"));
   },
   expect: "abb"
-}, {
-  name: "first: {first: true, last: true, capture: true}",
-  fun: function (res) {
-    function a(e) {
-      res.push("a");
-    }
-
-    function b(e) {
-      res.push("b");
-    }
-
-    function c(e) {
-      res.push("c");
-    }
-
-    const dom = cleanDom(true);
-    try {
-      dom.slot.addEventListener("click", a, {first: true, last: true, capture: true});
-    } catch (e) {
-      res.push("error ");
-    }
-    dom.slot.addEventListener("click", b);
-
-    dom.slot.dispatchEvent(new Event("click"));
-  },
-  expect: "error b"
 }];

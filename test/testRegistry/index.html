@@ -86,8 +86,9 @@
   import {dynamicTest} from "./testDynamic.js";
   import {testRegistry} from "./testRegistry.js";
   import {testOnce} from "./testOnce.js";
-  import {lastTest, lastErrorsTest, last2} from "./testLast.js";
-  import {firstTest, firstErrorsTest, first2} from "./testFirst.js";
+  import {lastTest,  last2} from "./testLast.js";
+  import {firstTest, first2} from "./testFirst.js";
+  import {errorsTest} from "./testErrors.js";
 
   (async function () {
     await runTests(eventSystems, testBasic);
@@ -96,9 +97,8 @@
     await runTests(eventSystems, testOnce);
     await runTests(eventSystems, lastTest);
     await runTests(eventSystems, last2);
-    await runTests(eventSystems, lastErrorsTest);
     await runTests(eventSystems, firstTest);
     await runTests(eventSystems, first2);
-    await runTests(eventSystems, firstErrorsTest);
+    await runTests(eventSystems, errorsTest);
   })();
 </script>

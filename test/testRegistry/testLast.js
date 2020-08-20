@@ -182,50 +182,6 @@ export const lastTest = [{
   result: getResult
 }];
 
-export const lastErrorsTest = [{
-  name: "Last error: adding two last listeners",
-  fun: function (res) {
-    function a(e) {
-      res.push("a");
-    }
-
-    function b(e) {
-      res.push("b");
-    }
-
-
-    const h1 = document.createElement("h1");
-
-    h1.addEventListener("click", a, {last: true});
-    try {
-      h1.addEventListener("click", b, {last: true});
-    } catch (e) {
-      res.push("1");
-    }
-    h1.dispatchEvent(new MouseEvent("click"))
-  },
-  expect: "1a",
-  result: getResult
-}, {
-  name: "Last error: capture phase listener ",
-  fun: function (res) {
-    function a(e) {
-      res.push("a");
-    }
-
-    const h1 = document.createElement("h1");
-
-    try {
-      h1.addEventListener("click", a, {last: true, capture: true});
-    } catch (e) {
-      res.push("1");
-    }
-    h1.dispatchEvent(new MouseEvent("click"))
-  },
-  expect: "1",
-  result: getResult
-}];
-
 export const last2 = [{
   name: "last: add {last: true} to THE SAME element twice",
   fun: function (res) {

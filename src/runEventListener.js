@@ -1,5 +1,20 @@
 import {downgradeCancelBubble, upgradeCancelBubble} from "./upgradeEvent_capture_cancelBubble.js";
 
+function verifyFirstLast(target, options) {
+  if (!(options instanceof Object))
+    return;
+  if (options.last && options.capture)
+    throw new Error("last option can only be used with bubble phase (at_target bubble phase) event listeners");
+  if (options.first && !options.capture)
+    throw new Error("first option can only be used with capture phase (at_target capture phase) event listeners");
+  // const previousLastEntry = targetToLastEntry.get(target);
+  // if (options.last && previousLastEntry)
+  //   throw new Error("only one event listener {last: true} can be added to the same target and event type.");
+  // const previousFirstEntry = targetToFirstEntry.get(target);
+  // if (options.first && previousFirstEntry)
+  //   throw new Error("only one event listener {first: true} can be added to the same target and event type.");
+}
+
 //todo we need to freeze the listener objects.. They can now be mutated.
 //this thing returns immutable listeners
 function getEventListeners(target, type, phase) {
@@ -143,6 +158,7 @@ export function upgradeAddEventListener(eventListenerOptions = {unstoppable: fal
     const capture = !!(options instanceof Object ? options.capture : options);
     if (this.hasEventListener(type, capture, cb))
       return;
+    verifyFirstLast(this, options);
     const listener = makeListener(this, type, cb, capture, options, eventListenerOptions);
     addListener(this, listener);
     // if(first/last)
