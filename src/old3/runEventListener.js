@@ -1,4 +1,6 @@
-import {downgradeCancelBubble, upgradeCancelBubble} from "./upgradeEvent_capture_cancelBubble.js";
+import {downgradeCancelBubble, upgradeCancelBubble} from "../upgradeEvent_capture_cancelBubble.js";
+
+const removedListeners = new WeakSet();
 
 function verifyFirstLast(target, type, options) {
   if (!(options instanceof Object))
@@ -47,7 +49,6 @@ function dispatchErrorEvent(error, message) {
 function runEventListener(target, event, listener) {
   if (listener.removed)                                  //dynamic removing of event listener during propagation on the same eventTarget.
     return;
-  Object.defineProperty(event, "capture", {value: listener.capture, configurable: true}); //cancelBubble rely on capture and currentTarget being up to date
   if (!listener.unstoppable && event.cancelBubble === 1) //stopPropagation()
     return;
   if (listener.once)
@@ -77,16 +78,27 @@ function hasEventListener(type, outsideCapture, cb) {
  * Patches the composedPathContexts at first event listener invocation for this event.
  * @param e
  */
-function patchComposedPathContext(e) {
-  if (e.composedPathContexts)
-    return;
-  const composedPathContexts = e.composedPath().map(target => target.getRootNode());
-  Object.defineProperty(e, "composedPathContexts", {get: () => composedPathContexts});
+function patchEventInitialState(e) {
+  if (!e.composedPathContexts) {                  //todo do we want to do this.
+    const composedPathContexts = e.composedPath().map(target => target.getRootNode());
+    Object.defineProperty(e, "composedPathContexts", {get: () => composedPathContexts});
+  }
+  // patchStateOfAHrefAttributeAtEventDispatch(e);//todo do we want/need this??? We need this for the defaultAction, we don't need it here..
+}
+
+/**
+ * cancelBubble rely on capture and currentTarget being up to date
+ *
+ * @param e
+ * @param listener
+ */
+function patchEventListenerState(e, listener){
+  Object.defineProperty(e, "capture", {value: listener.capture, configurable: true});
 }
 
 function genericHandleEventListener(e) {
-  patchComposedPathContext(e);    //todo not sure we want to do this.
-  // patchStateOfAHrefAttributeAtEventDispatch(e);//todo do we want/need this??? We need this for the defaultAction, we don't need it here..
+  patchEventInitialState(e);
+  patchEventListenerState(e, this);
   runEventListener(this.target, e, this);
 }
 
@@ -95,15 +107,16 @@ function makeListener(target, type, cb, capture, options, keys) {
     const listener = {type, capture, target, listener: cb, handleEvent: genericHandleEventListener};
     for (let key in keys)
       listener[key] = options.hasOwnProperty(key) ? options[key] : keys[key];
-    // Object.freeze(listener);
+    Object.defineProperty(listener, "removed", {get: function(){return removedListeners.has(this);}});
+    Object.freeze(listener);
     return listener;
   }
   const listener = Object.assign({}, keys, {type, capture, target, listener: cb, handleEvent: genericHandleEventListener});
-  // Object.freeze(listener);
+  Object.defineProperty(listener, "removed", {get: function(){return removedListeners.has(this);}});
+  Object.freeze(listener);
   return listener;
 }
 
-//todo here we need to do a fix for first and last
 function addListener(target, listener) {
   let dict = listeners.get(target);
   !dict && listeners.set(target, dict = {});
@@ -111,7 +124,6 @@ function addListener(target, listener) {
   list.push(listener);
 }
 
-//todo here we need to do a fix for first and last
 function removeListener(target, type, cb, outsideCapture) {
   const dict = listeners.get(target);
   if (!dict)
@@ -197,7 +209,7 @@ export function upgradeAddEventListener(eventListenerOptions = {unstoppable: fal
     const listener = removeListener(this, type, cb, capture);
     if (!listener)
       return;
-    listener.removed = true;
+    removedListeners.add(listener);
     removeEventListenerOG.value.call(this, type, listener, capture);
   }
 
@@ -211,7 +223,8 @@ export function upgradeAddEventListener(eventListenerOptions = {unstoppable: fal
     getEventListeners,
     clearStopPropagationStateAtTheStartOfDispatchEvent,
     runEventListener,
-    patchComposedPathContext
+    patchEventInitialState,
+    patchEventListenerState
   };
 }
 

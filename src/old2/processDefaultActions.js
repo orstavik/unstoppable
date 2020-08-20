@@ -1,4 +1,4 @@
-import {composedPathContextIDs, lastPropagationTarget, getContextID} from "../computePaths.js";
+import {composedPathContextIDs, lastPropagationTarget, getContextID} from "../old3/computePaths.js";
 import {nativeDefaultActions} from "./nativeDefaultActions.js";
 
 let nativePreventDefault;
