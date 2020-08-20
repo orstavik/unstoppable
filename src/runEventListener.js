@@ -31,11 +31,6 @@ function dispatchErrorEvent(error, message) {
 
 //todo this function we also want to do in the dispatchEvent method.
 function runEventListener(target, event, listener) {
-  if (!event.composedPathContexts) { //patch composedPathContexts at first event listener invocation for this event.
-    //todo not sure we want to do this. Also, we need to preserve the state of attributes for for example a[href] so that it can be used in default actions.
-    const composedPathContexts = event.composedPath().map(target => target.getRootNode());
-    Object.defineProperty(event, "composedPathContexts", {get: () => composedPathContexts});   //, configurable: false, writable: false
-  }
   if (listener.removed)                                  //dynamic removing of event listener during propagation on the same eventTarget.
     return;
   Object.defineProperty(event, "capture", {value: listener.capture, configurable: true}); //cancelBubble rely on capture and currentTarget being up to date
@@ -64,7 +59,20 @@ function hasEventListener(type, outsideCapture, cb) {
   return list && list.find(({listener, capture}) => listener === cb && capture === outsideCapture);
 }
 
+/**
+ * Patches the composedPathContexts at first event listener invocation for this event.
+ * @param e
+ */
+function patchComposedPathContext(e) {
+  if (e.composedPathContexts)
+    return;
+  const composedPathContexts = e.composedPath().map(target => target.getRootNode());
+  Object.defineProperty(e, "composedPathContexts", {get: () => composedPathContexts});
+}
+
 function genericHandleEventListener(e) {
+  patchComposedPathContext(e);    //todo not sure we want to do this.
+  // patchStateOfAHrefAttributeAtEventDispatch(e);//todo do we want/need this??? We need this for the defaultAction, we don't need it here..
   runEventListener(this.target, e, this);
 }
 
@@ -158,7 +166,12 @@ export function upgradeAddEventListener(eventListenerOptions = {unstoppable: fal
     hasEventListener: {value: hasEventListener, configurable: true}
   });
   const clearStopPropagationStateAtTheStartOfDispatchEvent = upgradeCancelBubble();
-  return {getEventListeners: getEventListeners, clearStopPropagationStateAtTheStartOfDispatchEvent};
+  return {
+    getEventListeners,
+    clearStopPropagationStateAtTheStartOfDispatchEvent,
+    runEventListener,
+    patchComposedPathContext
+  };
 }
 
 export function downgradeAddEventListener() {
