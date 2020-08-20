@@ -15,12 +15,11 @@ function verifyFirstLast(target, type, options) {
     throw new Error("only one event listener {first: true} can be added to the same target and event type.");
 }
 
-//todo we need to freeze the listener objects.. They can now be mutated.
 //this thing returns immutable listeners
 function getEventListeners(target, type, phase) {
   const allListeners = listeners.get(target);
   if (!allListeners)
-    return [];
+    return !type ? {} : [];
   if (!type && !phase) {
     const dictClone = {};
     for (let type in allListeners)
@@ -96,9 +95,12 @@ function makeListener(target, type, cb, capture, options, keys) {
     const listener = {type, capture, target, listener: cb, handleEvent: genericHandleEventListener};
     for (let key in keys)
       listener[key] = options.hasOwnProperty(key) ? options[key] : keys[key];
+    // Object.freeze(listener);
     return listener;
   }
-  return Object.assign({}, keys, {type, capture, target, listener: cb, handleEvent: genericHandleEventListener});
+  const listener = Object.assign({}, keys, {type, capture, target, listener: cb, handleEvent: genericHandleEventListener});
+  // Object.freeze(listener);
+  return listener;
 }
 
 //todo here we need to do a fix for first and last
@@ -160,11 +162,34 @@ export function upgradeAddEventListener(eventListenerOptions = {unstoppable: fal
       return;
     verifyFirstLast(this, type, options);
     const listener = makeListener(this, type, cb, capture, options, eventListenerOptions);
+
+    //FIRST start
+    if(listener.first){
+      const listeners = getEventListeners(this, type);
+      for (let listener of listeners)
+        this.removeEventListener(type, listener.listener, listener);
+      addListener(this, listener);
+      const onceRemoved = Object.assign({}, listener, {once: false});
+      addEventListenerOG.value.call(this, type, listener, onceRemoved);
+      for (let listener of listeners)
+        this.addEventListener(type, listener.listener, listener);
+      return;
+    }
+    //FIRST end
+
     addListener(this, listener);
-    // if(first/last)
-    //   thenDoStuff();
     const onceRemoved = Object.assign({}, listener, {once: false}); //runEventListener must override once
     addEventListenerOG.value.call(this, type, listener, onceRemoved);
+
+    //LAST start
+    if (!listener.last) {
+      const last = getEventListeners(this, type, Event.BUBBLING_PHASE).filter(listener => listener.last)[0];
+      if (last) {
+        this.removeEventListener(type, last.listener, last);
+        this.addEventListener(type, last.listener, last);
+      }
+    }
+    //LAST end
   }
 
   function removeEventListenerUpgraded(type, cb, options) {

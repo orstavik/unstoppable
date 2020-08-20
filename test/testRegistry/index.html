@@ -69,12 +69,12 @@
   }
 
   function REGISTER() {
-    window.getEventListeners = upgradeAddEventListener().getEventListeners;
+    window.customGetEventListeners = upgradeAddEventListener().getEventListeners;
   }
 
   function REGISTER_off() {
     downgradeAddEventListener();
-    delete window.getEventListeners;
+    delete window.customGetEventListeners;
   }
 
   const eventSystems = [

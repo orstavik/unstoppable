@@ -8,7 +8,7 @@ export const testRegistry = [{
     }
 
     h1.addEventListener("click", cb);
-    res.push(getEventListeners(h1, "click").length);
+    res.push(customGetEventListeners(h1, "click").length);
     h1.dispatchEvent(new Event("click"));
   },
   expect: "1!",
@@ -22,11 +22,11 @@ export const testRegistry = [{
 
     const h1 = document.createElement("h1");
     h1.addEventListener("click", cb);
-    const eventListeners = getEventListeners(h1, "click");
+    const eventListeners = customGetEventListeners(h1, "click");
     const listenerObject = eventListeners[0];
     res.push("" + eventListeners.length + listenerObject.removed);
     h1.removeEventListener("click", cb);
-    res.push(getEventListeners(h1, "click").length);
+    res.push(customGetEventListeners(h1, "click").length);
     res.push(listenerObject?.removed);
     h1.dispatchEvent(new Event("click"));
   },
