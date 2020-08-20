@@ -1,4 +1,4 @@
-import {upgradeCancelBubble, downgradeCancelBubble} from "./upgradeEvent_capture_cancelBubble.js";
+import {downgradeCancelBubble, upgradeCancelBubble} from "./upgradeEvent_capture_cancelBubble.js";
 
 //todo we need to freeze the listener objects.. They can now be mutated.
 //this thing returns immutable listeners
@@ -23,9 +23,16 @@ function getEventListeners(target, type, phase) {
   throw new Error("Illegal event phase for getEventListeners: phase can only be Event.BUBBLING_PHASE, Event.CAPTURING_PHASE, or Event.AT_TARGET.");
 }
 
-function runEventListener(event, listener) {
-  const target = this;
+function dispatchErrorEvent(error, message) {
+  const uncaught = new ErrorEvent('error', {error, message});
+  window.dispatchEvent(uncaught);
+  !uncaught.defaultPrevented && console.error(uncaught);
+}
+
+//todo this function we also want to do in the dispatchEvent method.
+function runEventListener(target, event, listener) {
   if (!event.composedPathContexts) { //patch composedPathContexts at first event listener invocation for this event.
+    //todo not sure we want to do this. Also, we need to preserve the state of attributes for for example a[href] so that it can be used in default actions.
     const composedPathContexts = event.composedPath().map(target => target.getRootNode());
     Object.defineProperty(event, "composedPathContexts", {get: () => composedPathContexts});   //, configurable: false, writable: false
   }
@@ -34,17 +41,14 @@ function runEventListener(event, listener) {
   Object.defineProperty(event, "capture", {value: listener.capture, configurable: true}); //cancelBubble rely on capture and currentTarget being up to date
   if (!listener.unstoppable && event.cancelBubble === 1) //stopPropagation()
     return;
+  if (listener.once)
+    target.removeEventListener(event.type, listener.listener, listener.capture);
   try {
     const cb = listener.listener;
     cb instanceof Function ? cb.call(target, event) : cb.handleEvent(event);
   } catch (error) {
-    const message = 'Uncaught Error: event listener break down';
-    const uncaught = new ErrorEvent('error', {error, message});
-    window.dispatchEvent(uncaught);//always sync!
-    !uncaught.defaultPrevented && console.error(uncaught);
+    dispatchErrorEvent(error, 'Uncaught Error: event listener break down');
   }
-  if (listener.once)
-    target.removeEventListener(event.type, listener.listener, listener.capture);
 }
 
 //target*! => type! => {listener}!
@@ -61,7 +65,7 @@ function hasEventListener(type, outsideCapture, cb) {
 }
 
 function genericHandleEventListener(e) {
-  runEventListener.call(this.target, e, this);
+  runEventListener(this.target, e, this);
 }
 
 function makeListener(target, type, cb, capture, options, keys) {
@@ -151,8 +155,7 @@ export function upgradeAddEventListener(eventListenerOptions = {unstoppable: fal
   Object.defineProperties(EventTarget.prototype, {
     addEventListener: {value: addEventListenerUpgraded},
     removeEventListener: {value: removeEventListenerUpgraded},
-    hasEventListener: {value: hasEventListener, configurable: true},
-    runEventListener: {value: runEventListener, configurable: true},
+    hasEventListener: {value: hasEventListener, configurable: true}
   });
   const clearStopPropagationStateAtTheStartOfDispatchEvent = upgradeCancelBubble();
   return {getEventListeners: getEventListeners, clearStopPropagationStateAtTheStartOfDispatchEvent};
