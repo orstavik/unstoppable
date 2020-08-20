@@ -3,64 +3,28 @@ import {cleanDom} from "./useCase1.js";
 export const firstTest = [{
   name: "first is true: {first: true, capture: true}",
   fun: function (res) {
-    function a(e) {
-      res.push("a");
-    }
-
-    function b(e) {
-      res.push("b");
-    }
-
-    function c(e) {
-      res.push("c");
-    }
-
     const h1 = document.createElement("h1");
-    h1.addEventListener("click", a);
-    h1.addEventListener("click", b, {first: true, capture: true});
-    h1.dispatchEvent(new MouseEvent("click"))
+    h1.addEventListener("click", e => res.push("a"));
+    h1.addEventListener("click", e => res.push("b"), {first: true, capture: true});
+    h1.dispatchEvent(new MouseEvent("click"));
   },
   expect: "ba"
 }, {
   name: "first is true: {first: 1}",
   fun: function (res) {
-    function a(e) {
-      res.push("a");
-    }
-
-    function b(e) {
-      res.push("b");
-    }
-
-    function c(e) {
-      res.push("c");
-    }
-
     const h1 = document.createElement("h1");
-    h1.addEventListener("click", b, {capture: true});
-    h1.addEventListener("click", a, {first: 1, capture: true});
-    h1.dispatchEvent(new MouseEvent("click"))
+    h1.addEventListener("click", e => res.push("b"), {capture: true});
+    h1.addEventListener("click", e => res.push("a"), {first: 1, capture: true});
+    h1.dispatchEvent(new MouseEvent("click"));
   },
   expect: "ab"
 }, {
   name: "first is true: {first: []}",
   fun: function (res) {
-    function a(e) {
-      res.push("a");
-    }
-
-    function b(e) {
-      res.push("b");
-    }
-
-    function c(e) {
-      res.push("c");
-    }
-
     const h1 = document.createElement("h1");
-    h1.addEventListener("click", a, {capture: true});
-    h1.addEventListener("click", b, {first: [], capture: true});
-    h1.dispatchEvent(new MouseEvent("click"))
+    h1.addEventListener("click", e => res.push("a"), {capture: true});
+    h1.addEventListener("click", e => res.push("b"), {first: [], capture: true});
+    h1.dispatchEvent(new MouseEvent("click"));
   },
   expect: "ba"
 }, {
@@ -173,10 +137,7 @@ export const firstTest = [{
     h1.removeEventListener("click", a, {capture: true});
     h1.addEventListener("click", b, {first: true, capture: true});
     h1.dispatchEvent(new MouseEvent("click"))
-
-  }
-
-  ,
+  },
   expect: "b"
 }, {
   name: "First: removeEventListener() {first: true, capture: true} when there is no event listener to remove",
@@ -195,9 +156,7 @@ export const firstTest = [{
 
     const h1 = document.createElement("h1");
     h1.removeEventListener("click", a, {first: true, capture: true});
-  }
-
-  ,
+  },
   expect: ""
 }];
 
@@ -274,10 +233,10 @@ export const first2 = [{
       res.push("c");
     }
 
-    let dom = cleanDom();
-    dom.div.addEventListener("click", b);
-    dom.div.addEventListener("click", a, {first: 1, capture: true});
-    dom.div.dispatchEvent(new Event("click"));
+    const h1 = document.createElement("h1");
+    h1.addEventListener("click", b);
+    h1.addEventListener("click", a, {first: 1, capture: true});
+    h1.dispatchEvent(new Event("click"));
   },
   expect: "ab"
 }, {
@@ -295,12 +254,12 @@ export const first2 = [{
       res.push("c");
     }
 
-    let dom = cleanDom();
-    dom.div.addEventListener("click", a, {first: true, capture: true});
-    dom.div.removeEventListener("click", a, {capture: true});
-    dom.div.addEventListener("click", a, {capture: true});
-    dom.div.removeEventListener("click", a, {last: true, capture: true});
-    dom.div.dispatchEvent(new Event("click"));
+    const h1 = document.createElement("h1");
+    h1.addEventListener("click", a, {first: true, capture: true});
+    h1.removeEventListener("click", a, {capture: true});
+    h1.addEventListener("click", a, {capture: true});
+    h1.removeEventListener("click", a, {last: true, capture: true});
+    h1.dispatchEvent(new Event("click"));
   },
   expect: ""
 }, {
@@ -318,16 +277,16 @@ export const first2 = [{
       res.push("c");
     }
 
-    let dom = cleanDom();
-    dom.div.addEventListener("click", a);
-    dom.div.addEventListener("click", b, {first: true, capture: true});
+    const h1 = document.createElement("h1");
+    h1.addEventListener("click", a);
+    h1.addEventListener("click", b, {first: true, capture: true});
     try {
-      dom.div.addEventListener("click", c, {first: true, capture: true});
-      dom.div.addEventListener("click", c);
+      h1.addEventListener("click", c, {first: true, capture: true});
+      h1.addEventListener("click", c);
     } catch (e) {
       res.push("error ");
     }
-    dom.div.dispatchEvent(new Event("click",));
+    h1.dispatchEvent(new Event("click",));
 
   },
   expect: "error ba"
@@ -371,15 +330,15 @@ export const first2 = [{
       res.push("c");
     }
 
-    let dom = cleanDom();
-    dom.div.addEventListener("click", a, {first: true, capture: true});
+    const h1 = document.createElement("h1");
+    h1.addEventListener("click", a, {first: true, capture: true});
     try {
-      dom.div.addEventListener("click", b, {first: true, capture: true});
-      dom.div.addEventListener("click", c, {first: true, capture: true});
+      h1.addEventListener("click", b, {first: true, capture: true});
+      h1.addEventListener("click", c, {first: true, capture: true});
     } catch (e) {
       res.push("error ");
     }
-    dom.div.dispatchEvent(new Event("click",));
+    h1.dispatchEvent(new Event("click",));
   },
   expect: "error a"
 }, {
@@ -419,16 +378,16 @@ export const first2 = [{
       res.push("c");
     }
 
-    const dom = cleanDom(true);
-    dom.div.addEventListener("click", a);
-    dom.div.addEventListener("click", b, {first: true, capture: true});
+    const h1 = document.createElement("h1");
+    h1.addEventListener("click", a);
+    h1.addEventListener("click", b, {first: true, capture: true});
 
     try {
-      dom.div.addEventListener("click", a, {capture: true, bubbles: false, first: true});
+      h1.addEventListener("click", a, {capture: true, bubbles: false, first: true});
     } catch (e) {
       res.push(" error ");
     }
-    dom.div.dispatchEvent(new Event("click"));
+    h1.dispatchEvent(new Event("click"));
   },
   expect: " error ba"
 }, {
@@ -446,14 +405,14 @@ export const first2 = [{
       res.push("c");
     }
 
-    const dom = cleanDom(true);
+    const h1 = document.createElement("h1");
     try {
-      dom.div.addEventListener("click", a, {capture: true, first: true});
+      h1.addEventListener("click", a, {capture: true, first: true});
     } catch (e) {
       res.push(" error ");
     }
-    dom.div.addEventListener("click", a);
-    dom.div.dispatchEvent(new Event("click",));
+    h1.addEventListener("click", a);
+    h1.dispatchEvent(new Event("click",));
   },
   expect: " error a"
 }, {
@@ -471,15 +430,15 @@ export const first2 = [{
       res.push("c");
     }
 
-    const dom = cleanDom(true);
-    dom.div.addEventListener("click", a);
-    dom.div.addEventListener("click", b, {capture: true, first: true});
+    const h1 = document.createElement("h1");
+    h1.addEventListener("click", a);
+    h1.addEventListener("click", b, {capture: true, first: true});
     try {
-      dom.div.addEventListener("click", c, {capture: true, first: true});
+      h1.addEventListener("click", c, {capture: true, first: true});
     } catch (e) {
       res.push(" error ");
     }
-    dom.div.dispatchEvent(new Event("click"));
+    h1.dispatchEvent(new Event("click"));
 
   },
   expect: " error ba"
@@ -498,11 +457,11 @@ export const first2 = [{
       res.push("c");
     }
 
-    const dom = cleanDom(true);
-    dom.slot.addEventListener("click", b, true);
-    dom.slot.addEventListener("click", a, {first: true, capture: true});
+    const h1 = document.createElement("h1");
+    h1.addEventListener("click", b, true);
+    h1.addEventListener("click", a, {first: true, capture: true});
 
-    dom.slot.dispatchEvent(new Event("click",));
+    h1.dispatchEvent(new Event("click",));
   },
   expect: "ab"
 }, {
@@ -520,12 +479,12 @@ export const first2 = [{
       res.push("c");
     }
 
-    const dom = cleanDom(true);
-    dom.slot.addEventListener("click", b, true);
-    dom.slot.addEventListener("click", a, {first: true, once: true, capture: true});
+    const h1 = document.createElement("h1");
+    h1.addEventListener("click", b, true);
+    h1.addEventListener("click", a, {first: true, once: true, capture: true});
 
-    dom.slot.dispatchEvent(new Event("click"));
-    dom.slot.dispatchEvent(new Event("click"));
+    h1.dispatchEvent(new Event("click"));
+    h1.dispatchEvent(new Event("click"));
   },
   expect: "abb"
 }, {
@@ -543,12 +502,12 @@ export const first2 = [{
       res.push("c");
     }
 
-    const dom = cleanDom(true);
-    dom.slot.addEventListener("click", a, {first: true, once: true, capture: true});
-    dom.slot.addEventListener("click", b);
+    const h1 = document.createElement("h1");
+    h1.addEventListener("click", a, {first: true, once: true, capture: true});
+    h1.addEventListener("click", b);
 
-    dom.slot.dispatchEvent(new Event("click"));
-    dom.slot.dispatchEvent(new Event("click"));
+    h1.dispatchEvent(new Event("click"));
+    h1.dispatchEvent(new Event("click"));
   },
   expect: "abb"
 }];

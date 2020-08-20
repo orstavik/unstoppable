@@ -30,5 +30,5 @@ export const testRegistry = [{
     res.push(listenerObject?.removed);
     h1.dispatchEvent(new Event("click"));
   },
-  expect: "1undefined0true",
+  expect: "1false0true",
 }];

@@ -1,5 +1,3 @@
-import {cleanDom} from "./useCase1.js";
-
 export const testBasic = [{
   name: "target only (addEventListener with different options, not connected to the DOM, called twice)",
   fun: function (res) {
